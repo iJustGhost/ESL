@@ -1,0 +1,16 @@
+key,type,encoding,value
+wifi,namespace,,
+ssid,data,string,ssid
+pass,data,string,password
+tag,namespace,,
+uuid,data,string,3f1c9a52-0000-4b6e-9d1a-000000000001
+name,data,string,Organic Whole Grain Bread 500g
+price,data,string,PHP 149.00
+sprice,data,string,PHP 119.00
+sale,data,u32,0
+slen,data,u32,0
+clock,namespace,,
+time,data,u32,1798128000
+device,namespace,,
+id,data,string,0
+apikey,data,string,d9eb1f9568167b81605a1e8d04396506c407c16abd9477cc
