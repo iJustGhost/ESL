@@ -37,7 +37,11 @@ namespace cfg
     constexpr const char *NTP_1 = "pool.ntp.org";
     constexpr const char *NTP_2 = "time.google.com";
 
-    // CORS: "*" lets any web page call the API. Use a specific origin such as
-    // "http://192.168.1.10:5173" if you know where your dashboard is served from.
-    constexpr const char *CORS_ORIGIN = "*";
+    // CORS: off by default. The web UI's *server* talks to the tags, so no browser page needs it.
+    // Only set an origin (e.g. "http://192.168.1.10:5173") if you call the tags from browser JS.
+    constexpr const char *CORS_ORIGIN = "";
+
+    // API auth: protected endpoints need this header to match the key stored in NVS (device/apikey).
+    constexpr const char *AUTH_HEADER = "X-Tag-Key";
+    constexpr size_t API_KEY_MIN_LEN = 16, API_KEY_MAX_LEN = 64;
 } // namespace cfg

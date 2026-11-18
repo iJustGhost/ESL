@@ -9,6 +9,7 @@
 //   {"cmd":"info"}
 //   {"cmd":"wifi","ssid":"My WiFi","pass":"secret"}   saves, then reboots
 //   {"cmd":"id","id":"PT-12345678"}                    saves, then reboots
+//   {"cmd":"apikey","key":"<16-64 chars>"}             saves, then reboots (never echoed back)
 // Lines that don't start with '{' are ignored. Remove serialConsole from main.cpp to disable.
 class SerialConsole
 {
@@ -69,6 +70,18 @@ private:
             return okAndReboot();
         }
 
+        if (cmd == "apikey")
+        {
+            String key = in["key"] | "";
+            if (key.length() < cfg::API_KEY_MIN_LEN || key.length() > cfg::API_KEY_MAX_LEN)
+                return fail("key must be 16-64 chars");
+            for (size_t i = 0; i < key.length(); i++)
+                if (key[i] <= ' ' || key[i] > '~')
+                    return fail("key must be printable ASCII without spaces");
+            store_.saveApiKey(key);
+            return okAndReboot();
+        }
+
         fail("unknown cmd");
     }
 
@@ -81,6 +94,7 @@ private:
         d["ok"] = true;
         d["id"] = identity_.id();
         d["ssid"] = ssid;
+        d["apikey_set"] = store_.loadApiKey().length() >= cfg::API_KEY_MIN_LEN; // the key itself is never sent
         d["connected"] = wifi_.connected();
         d["ip"] = wifi_.connected() ? WiFi.localIP().toString() : "";
         send(d);

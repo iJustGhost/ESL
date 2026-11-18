@@ -3,6 +3,7 @@
 #include "PriceTag.h"
 #include "Storage.h"
 #include "Identity.h"
+#include "Auth.h"
 #include "Clock.h"
 #include "WifiLink.h"
 #include "Display.h"
@@ -14,12 +15,13 @@ void refreshDisplay();
 
 Storage storage;
 Identity identity;
+Auth auth;
 PriceTag tag;
 Clock rtc(storage);
 WifiLink wifi;
 Display display;
 StatusLed led;
-ApiServer api(tag, storage, rtc, identity, refreshDisplay);
+ApiServer api(tag, storage, rtc, identity, auth, refreshDisplay);
 SerialConsole serialConsole(storage, identity, wifi);
 
 // Turns the current state into something the display can draw.
@@ -76,6 +78,7 @@ void setup()
 
     tag = storage.loadTag();
     identity.begin(storage);       // before WiFi: the hostname is derived from the id
+    auth.begin(storage);           // API key from NVS (device/apikey)
     rtc.begin();                   // seeds from NVS, then NTP takes over when it can
     led.begin(cfg::LED_PIN);
     wifi.begin(storage, identity); // non-blocking

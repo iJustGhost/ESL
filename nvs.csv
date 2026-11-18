@@ -1,7 +1,7 @@
 key,type,encoding,value
 wifi,namespace,,
-ssid,data,string,ssid
-pass,data,string,password
+ssid,data,string,SKYFiber_MESH_943C
+pass,data,string,531112056
 tag,namespace,,
 uuid,data,string,3f1c9a52-0000-4b6e-9d1a-000000000001
 name,data,string,Organic Whole Grain Bread 500g

@@ -6,7 +6,7 @@
 //   namespace "wifi":   ssid, pass
 //   namespace "tag":    uuid, name, price, sprice, sale, slen
 //   namespace "clock":  time
-//   namespace "device": id
+//   namespace "device": id, apikey
 class Storage
 {
 public:
@@ -84,6 +84,22 @@ public:
     {
         p_.begin("device", false);
         p_.putString("id", id);
+        p_.end();
+    }
+
+    // ---- API key (shared secret for the HTTP API) ----
+    String loadApiKey()
+    {
+        p_.begin("device", false);
+        String s = p_.getString("apikey", "");
+        p_.end();
+        return s;
+    }
+
+    void saveApiKey(const String &key)
+    {
+        p_.begin("device", false);
+        p_.putString("apikey", key);
         p_.end();
     }
 

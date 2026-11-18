@@ -8,17 +8,20 @@
 #include "Storage.h"
 #include "Clock.h"
 #include "Identity.h"
+#include "Auth.h"
 
-// HTTP API (port 80). Accepts JSON bodies or form/query args. CORS enabled.
-//   GET/POST/PUT /api/tag   uuid, name, price, sale_price, sale, sale_len  (partial updates OK)
-//   GET/POST/PUT /api/time  time (epoch seconds)
-//   GET          /api/id    {"device":"pricetag","id":"PT-...","ip":"..."}  (for scanners)
+// HTTP API (port 80). Accepts JSON bodies or form/query args.
+//   GET/POST/PUT /api/tag   uuid, name, price, sale_price, sale, sale_len  (partial updates OK)  [key]
+//   GET/POST/PUT /api/time  time (epoch seconds)                                                 [key]
+//   GET          /api/id    {"device":"pricetag","id":"PT-...","ip":"..."}  (open, for scanners)
+// [key] = the X-Tag-Key header must match the key in NVS (device/apikey), otherwise 401.
+// A tag with no key configured answers 503 on those endpoints (fails closed).
 class ApiServer
 {
 public:
-    ApiServer(PriceTag &tag, Storage &store, Clock &clock, Identity &identity,
+    ApiServer(PriceTag &tag, Storage &store, Clock &clock, Identity &identity, Auth &auth,
               std::function<void()> onChange)
-        : tag_(tag), store_(store), clock_(clock), identity_(identity), onChange_(onChange) {}
+        : tag_(tag), store_(store), clock_(clock), identity_(identity), auth_(auth), onChange_(onChange) {}
 
     void begin()
     {
@@ -46,6 +49,8 @@ public:
                 return;
             }
             reply(404, "application/json", "{\"error\":\"not found\"}"); });
+        const char *headers[] = {cfg::AUTH_HEADER};
+        server_.collectHeaders(headers, 1); // makes server_.header(...) work for the key
         server_.begin();
     }
 
@@ -54,6 +59,13 @@ public:
 private:
     // ---- /api/tag ----
     void tagGet()
+    {
+        if (!authorized())
+            return;
+        sendTag();
+    }
+
+    void sendTag()
     {
         JsonDocument d;
         d["id"] = identity_.id();
@@ -68,6 +80,8 @@ private:
 
     void tagPost()
     {
+        if (!authorized())
+            return;
         JsonDocument in;
         if (!readBody(in))
             return;
@@ -126,11 +140,18 @@ private:
         tag_ = next;
         store_.saveTag(tag_);
         onChange_();
-        tagGet();
+        sendTag();
     }
 
     // ---- /api/time ----
     void timeGet()
+    {
+        if (!authorized())
+            return;
+        sendTime();
+    }
+
+    void sendTime()
     {
         JsonDocument d;
         d["time"] = (uint32_t)time(nullptr);
@@ -140,6 +161,8 @@ private:
 
     void timePost()
     {
+        if (!authorized())
+            return;
         JsonDocument in;
         if (!readBody(in))
             return;
@@ -149,7 +172,7 @@ private:
             return fail("time must be unix epoch seconds");
         clock_.set(t);
         onChange_();
-        timeGet();
+        sendTime();
     }
 
     // ---- /api/id : cheap, for IP scanners ----
@@ -162,9 +185,28 @@ private:
         sendJson(200, d);
     }
 
-    // ---- CORS ----
+    // ---- auth ----
+    // Protected endpoints: X-Tag-Key must match the key stored in NVS.
+    bool authorized()
+    {
+        if (!auth_.configured())
+        {
+            reply(503, "application/json", "{\"error\":\"api key not configured on this tag\"}");
+            return false;
+        }
+        if (!auth_.allows(server_.header(cfg::AUTH_HEADER)))
+        {
+            reply(401, "application/json", "{\"error\":\"unauthorized\"}");
+            return false;
+        }
+        return true;
+    }
+
+    // ---- CORS (disabled unless cfg::CORS_ORIGIN is set) ----
     void cors()
     {
+        if (!cfg::CORS_ORIGIN[0])
+            return;
         server_.sendHeader("Access-Control-Allow-Origin", cfg::CORS_ORIGIN);
         server_.sendHeader("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS");
         server_.sendHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -251,5 +293,6 @@ private:
     Storage &store_;
     Clock &clock_;
     Identity &identity_;
+    Auth &auth_;
     std::function<void()> onChange_;
 };
