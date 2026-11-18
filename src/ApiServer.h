@@ -75,6 +75,7 @@ private:
         d["sale_price"] = tag_.salePrice;
         d["sale"] = tag_.saleStart;
         d["sale_len"] = tag_.saleLen;
+        d["badge"] = tag_.badge;
         sendJson(200, d);
     }
 
@@ -134,6 +135,17 @@ private:
                 return fail("sale_len must be seconds");
             any = true;
         }
+
+        if (field(in, "badge", v))
+        {
+            v.trim();
+            v.toLowerCase();
+            if (v != "" && v != "new" && v != "promo" && v != "sale")
+                return fail("badge must be new, promo, sale or empty");
+            next.badge = v;
+            any = true;
+        }
+        
         if (!any)
             return fail("no fields provided");
 

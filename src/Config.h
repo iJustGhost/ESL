@@ -3,6 +3,11 @@
 
 namespace cfg
 {
+    // Badge (top-right corner): New! / Promo! / Sale!
+    constexpr uint16_t BADGE_NEW = 0x2BE6, BADGE_PROMO = 0xF3E0, BADGE_SALE = 0xD165; // green / orange / red
+    constexpr uint16_t BADGE_FG = 0xFFFF;
+    constexpr int BADGE_MARGIN = 4, BADGE_PAD_X = 8, BADGE_PAD_Y = 4;
+
     // Pins (SCK=18 and MOSI=23 are the ESP32 hardware SPI defaults)
     constexpr int TFT_CS = 5, TFT_DC = 2, TFT_RST = 4;
     constexpr uint32_t SPI_HZ = 40000000;

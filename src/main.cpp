@@ -42,6 +42,7 @@ View buildView()
     v.price = tag.shownPrice(phase);
     v.footer = tag.footer(phase, now);
     v.onSale = (phase == SalePhase::Active);
+    v.badge = tag.shownBadge(phase);
     return v;
 }
 
@@ -77,9 +78,9 @@ void setup()
     }
 
     tag = storage.loadTag();
-    identity.begin(storage);       // before WiFi: the hostname is derived from the id
-    auth.begin(storage);           // API key from NVS (device/apikey)
-    rtc.begin();                   // seeds from NVS, then NTP takes over when it can
+    identity.begin(storage); // before WiFi: the hostname is derived from the id
+    auth.begin(storage);     // API key from NVS (device/apikey)
+    rtc.begin();             // seeds from NVS, then NTP takes over when it can
     led.begin(cfg::LED_PIN);
     wifi.begin(storage, identity); // non-blocking
     api.begin();

@@ -1,5 +1,6 @@
 #pragma once
 #include <Arduino.h>
+#include "Badge.h"
 
 enum class SalePhase
 {
@@ -15,10 +16,23 @@ enum class SalePhase
 struct PriceTag
 {
     String uuid, name, price, salePrice;
+    String badge; // "", "new", "promo" or "sale"
     uint32_t saleStart = 0; // epoch seconds the sale starts, 0 = none
     uint32_t saleLen = 0;   // sale duration in seconds, 0 = never ends
 
     bool configured() const { return name.length() > 0; }
+
+    // New! and Promo! always show; Sale! only while the sale is running.
+    Badge shownBadge(SalePhase p) const
+    {
+        if (badge == "new")
+            return Badge::New;
+        if (badge == "promo")
+            return Badge::Promo;
+        if (badge == "sale" && p == SalePhase::Active)
+            return Badge::Sale;
+        return Badge::None;
+    }
 
     SalePhase phase(uint32_t now) const
     {

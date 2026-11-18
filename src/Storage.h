@@ -7,6 +7,7 @@
 //   namespace "tag":    uuid, name, price, sprice, sale, slen
 //   namespace "clock":  time
 //   namespace "device": id, apikey
+//   namespace "badge": badge
 class Storage
 {
 public:
@@ -21,6 +22,7 @@ public:
         t.salePrice = p_.getString("sprice", "");
         t.saleStart = p_.getUInt("sale", 0);
         t.saleLen = p_.getUInt("slen", 0);
+        t.badge = p_.getString("badge", "");
         p_.end();
         return t;
     }
@@ -34,6 +36,7 @@ public:
         p_.putString("sprice", t.salePrice);
         p_.putUInt("sale", t.saleStart);
         p_.putUInt("slen", t.saleLen);
+        p_.putString("badge", t.badge);
         p_.end();
     }
 

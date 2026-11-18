@@ -4,6 +4,8 @@
 #include <Fonts/FreeSansBold24pt7b.h>
 #include <Fonts/FreeSansBold18pt7b.h>
 #include <Fonts/FreeSans9pt7b.h>
+#include <Fonts/FreeSansBold9pt7b.h>
+#include "Badge.h"
 #include "Config.h"
 
 // What the screen should show. Display doesn't know about sales or WiFi.
@@ -15,10 +17,11 @@ struct View
     String tagId; // <- new: small label in the top-left corner
     bool onSale = false;
     bool compact = false;
+    Badge badge = Badge::None; // New! / Promo! / Sale! label, top-right corner
 
     bool sameLayoutAs(const View &o) const
     {
-        return title == o.title && price == o.price && tagId == o.tagId && compact == o.compact &&
+        return title == o.title && price == o.price && tagId == o.tagId && badge == o.badge && compact == o.compact &&
                (footer.length() > 0) == (o.footer.length() > 0);
     }
 };
@@ -163,7 +166,8 @@ private:
         canvas_->fillScreen(cfg::NAME_BG);
         canvas_->setTextColor(cfg::NAME_FG);
         nameLine_.draw(*canvas_);
-        drawTagId(); // <- new
+        drawTagId();
+        drawBadge();
         push(0);
     }
 
@@ -203,6 +207,42 @@ private:
         canvas_->setTextColor(cfg::ID_FG);
         canvas_->setCursor(cfg::ID_MARGIN - bx, cfg::ID_MARGIN - by); // top-left, with margin
         canvas_->print(view_.tagId);
+    }
+
+        void drawBadge()
+    {
+        if (view_.badge == Badge::None)
+            return;
+
+        const char *text = "New!";
+        uint16_t bg = cfg::BADGE_NEW;
+        if (view_.badge == Badge::Promo)
+        {
+            text = "Promo!";
+            bg = cfg::BADGE_PROMO;
+        }
+        else if (view_.badge == Badge::Sale)
+        {
+            text = "Sale!";
+            bg = cfg::BADGE_SALE;
+        }
+
+        int16_t bx, by;
+        uint16_t bw, bh;
+        canvas_->setFont(&FreeSansBold9pt7b);
+        canvas_->setTextSize(1);
+        canvas_->getTextBounds(text, 0, 0, &bx, &by, &bw, &bh);
+
+        int w = bw + 2 * cfg::BADGE_PAD_X;
+        int h = bh + 2 * cfg::BADGE_PAD_Y;
+        int x = cfg::SCREEN_W - cfg::BADGE_MARGIN - w;
+        int y = cfg::BADGE_MARGIN;
+
+        canvas_->fillRoundRect(x, y, w, h, h / 2, bg);            // pill
+        canvas_->drawRoundRect(x, y, w, h, h / 2, cfg::BADGE_FG); // thin white outline
+        canvas_->setTextColor(cfg::BADGE_FG);
+        canvas_->setCursor(x + cfg::BADGE_PAD_X - bx, y + cfg::BADGE_PAD_Y - by);
+        canvas_->print(text);
     }
 
     void push(int y)
